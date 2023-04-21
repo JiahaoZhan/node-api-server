@@ -1,23 +1,10 @@
-const mysql = require('mysql');
-const config = require('../db/dbConfig');
-
-// 连接mysql
-function connect() {
-  const { host, user, password, database } = config;
-  return mysql.createConnection({
-    host,
-    user,
-    password,
-    database
-  })
-}
+const db = require('../database/dbConfig');
 
 // 新建查询连接
 function querySql(sql) { 
-  const conn = connect();
   return new Promise((resolve, reject) => {
     try {
-      conn.query(sql, (err, res) => {
+      db.query(sql, (err, res) => {
         if (err) {
           reject(err);
         } else {
@@ -28,7 +15,7 @@ function querySql(sql) {
       reject(e);
     } finally {
       // 释放连接
-      conn.end();
+      db.end();
     }
   })
 }
