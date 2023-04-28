@@ -3,8 +3,6 @@ const express = require("express");
 const cors = require("cors");
 const router = require("./routes");
 const sequelize = require("./database/dbConfig");
-const Task = require("./models/task");
-const User = require("./models/user");
 const app = express();
 
 app.use(bodyParser.json()); // 解析json数据格式
@@ -15,6 +13,6 @@ app.use("/", router);
 
 sequelize.sync().then((result) => {
   app.listen(process.env.PORT || 8088, () => {
-    console.log("服务已启动 http://localhost:8088");
+    console.log("server started");
   });
 });
