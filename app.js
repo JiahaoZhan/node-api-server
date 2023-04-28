@@ -14,7 +14,7 @@ app.use(cors());
 app.use("/", router);
 
 sequelize.sync().then((result) => {
-  app.listen(8088, () => {
+  app.listen(process.env.PORT || 8088, () => {
     console.log("服务已启动 http://localhost:8088");
   });
 });
