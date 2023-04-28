@@ -18,12 +18,16 @@ const Task = sequelize.define("Task", {
   },
   status: {
     type: Sequelize.STRING,
-    allowNull: true,
+    allowNull: false,
   },
   gmt_expire: {
     type: Sequelize.DATE,
     allowNull: false,
   },
+  important: {
+    type: Sequelize.BOOLEAN,
+    allowNull: false
+  }
 });
 
 User.hasMany(Task);

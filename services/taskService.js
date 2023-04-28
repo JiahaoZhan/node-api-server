@@ -21,18 +21,18 @@ function queryTaskList(req, res, next) {
   } else {
     let { pageSize, pageNum, status } = req.query;
     // default values for pagination
-    pageSize = pageSize ? pageSize : 1;
-    pageNum = pageNum ? pageNum : 1;
+    // pageSize = pageSize ? pageSize : 1;
+    // pageNum = pageNum ? pageNum : 1;
     status = status || status == 0 ? status : null;
-    console.log("***pagination***", pageSize, pageNum, status);
+    // console.log("***pagination***", pageSize, pageNum, status);
     // find the current user
     User.findOne({ where: { email: decode(req).email } }).then((user) => {
       // find the tasks associated with the user
-      const skipped = (pageNum - 1) * pageSize;
+      // const skipped = (pageNum - 1) * pageSize;
       Task.findAndCountAll({
         where: { UserId: user.id },
-        offset: skipped,
-        limit: parseInt(pageSize),
+        // offset: skipped,
+        // limit: parseInt(pageSize),
       }).then(({ count, rows }) => {
         // console.log("tasks", tasks);
         // console.log("tasks", tasks[0].dataValues.gmt_expire);
@@ -84,25 +84,26 @@ function addTask(req, res, next) {
   } else {
     const email = decode(req).email;
     User.findOne({ where: { email: email } }).then((user) => {
-      const { title, content, gmt_expire, status, important, id } =
+      const { title, content, gmt_expire, important, id } =
         req.body.task;
       Task.findOrCreate({
         where: { title: title },
         defaults: {
           content,
           gmt_expire,
-          status,
+          status: "To do",
           important,
           id,
           UserId: user.id,
         },
       }).then(([task, created]) => {
+        console.log(task)
         if (!created) {
           console.log("Tasks cannot have duplicated names");
           res.json({
             code: CODE_ERROR,
             msg: "***Task creation failed***",
-            data: {},
+            data: null,
           });
         } else {
           res.json({
@@ -159,171 +160,120 @@ function editTask(req, res, next) {
     });
   }
 }
-//   findTask(id, 2).then((task) => {
-//     if (task) {
-//       findTask(title, 1).then((result) => {
-//         if (result) {
-//           res.json({
-//             code: CODE_ERROR,
-//             msg: "任务名称不能重复",
-//             data: null,
-//           });
-//         } else {
-//           const query = `update sys_task set title='${title}', content='${content}', gmt_expire='${gmt_expire}' where id='${id}'`;
-//           querySql(query).then((data) => {
-//             // console.log('编辑任务===', data);
-//             if (!data || data.length === 0) {
-//               res.json({
-//                 code: CODE_ERROR,
-//                 msg: "更新数据失败",
-//                 data: null,
-//               });
-//             } else {
-//               res.json({
-//                 code: CODE_SUCCESS,
-//                 msg: "更新数据成功",
-//                 data: null,
-//               });
-//             }
-//           });
-//         }
-//       });
-//     } else {
-//       res.json({
-//         code: CODE_ERROR,
-//         msg: "参数错误或数据不存在",
-//         data: null,
-//       });
-//     }
-//   });
-// }
 
-// 操作任务状态
 function updateTaskStatus(req, res, next) {
   const err = validationResult(req);
   if (!err.isEmpty()) {
     const [{ msg }] = err.errors;
     next(boom.badRequest(msg));
   } else {
-    let { id, status } = req.body;
-    findTask(id, 2).then((task) => {
-      if (task) {
-        const query = `update sys_task set status='${status}' where id='${id}'`;
-        querySql(query).then((data) => {
-          // console.log('操作任务状态===', data);
-          if (!data || data.length === 0) {
-            res.json({
-              code: CODE_ERROR,
-              msg: "操作数据失败",
-              data: null,
-            });
-          } else {
-            res.json({
-              code: CODE_SUCCESS,
-              msg: "操作数据成功",
-              data: null,
-            });
+    let { id, status, index } = req.body;
+    const newStatus = status === "To do" ? "Finished" : "To do"
+    Task.update(
+      { status: newStatus },
+      {
+        where: {
+          id
+        },
+      }
+    ).then(result => {
+      if (result !== 0) {
+        res.json({
+          code: CODE_SUCCESS,
+          msg: "Update status successful",
+          data: {
+            index,
+            status: newStatus
           }
-        });
-      } else {
+        })
+      }
+      else {
         res.json({
           code: CODE_ERROR,
-          msg: "参数错误或数据不存在",
-          data: null,
-        });
+          msg: "Fail to update mark",
+          data: null
+        })
       }
-    });
+    })
   }
 }
 
-// 点亮红星标记
 function updateMark(req, res, next) {
   const err = validationResult(req);
   if (!err.isEmpty()) {
     const [{ msg }] = err.errors;
     next(boom.badRequest(msg));
   } else {
-    let { id, is_major } = req.body;
-    findTask(id, 2).then((task) => {
-      if (task) {
-        const query = `update sys_task set is_major='${is_major}' where id='${id}'`;
-        querySql(query).then((data) => {
-          // console.log('点亮红星标记===', data);
-          if (!data || data.length === 0) {
-            res.json({
-              code: CODE_ERROR,
-              msg: "操作数据失败",
-              data: null,
-            });
-          } else {
-            res.json({
-              code: CODE_SUCCESS,
-              msg: "操作数据成功",
-              data: null,
-            });
+    let { id, index, important } = req.body;
+    Task.update(
+      { important: !important },
+      {
+        where: {
+          id
+        },
+      }
+    ).then(result => {
+      if (result !== 0) {
+        res.json({
+          code: CODE_SUCCESS,
+          msg: "Update mark successful",
+          data: {
+            index,
+            important: !important
           }
-        });
-      } else {
+        })
+      }
+      else {
         res.json({
           code: CODE_ERROR,
-          msg: "参数错误或数据不存在",
-          data: null,
-        });
+          msg: "Fail to update mark",
+          data: null
+        })
       }
-    });
+    })
   }
 }
 
-// 删除任务
 function deleteTask(req, res, next) {
   const err = validationResult(req);
   if (!err.isEmpty()) {
     const [{ msg }] = err.errors;
     next(boom.badRequest(msg));
   } else {
-    let { id, status } = req.body;
-    findTask(id, 2).then((task) => {
-      if (task) {
-        const query = `update sys_task set status='${status}' where id='${id}'`;
-        // const query = `delete from sys_task where id='${id}'`;
-        querySql(query).then((data) => {
-          // console.log('删除任务===', data);
-          if (!data || data.length === 0) {
-            res.json({
-              code: CODE_ERROR,
-              msg: "删除数据失败",
-              data: null,
-            });
-          } else {
-            res.json({
-              code: CODE_SUCCESS,
-              msg: "删除数据成功",
-              data: null,
-            });
+    let { id } = req.body;
+    Task.destroy({
+      where: {
+        id: id
+      }
+    }).then(result=> {
+      if (result !== 0) {
+        res.json({
+          code: CODE_SUCCESS,
+          msg: "***Task delete succeed***",
+          data: {
+            id
           }
-        });
-      } else {
+        })
+      }
+      else {
         res.json({
           code: CODE_ERROR,
-          msg: "数据不存在",
-          data: null,
-        });
+          msg: "***Task delete failed***",
+          data: null
+        })
       }
-    });
-  }
-}
+    })
+  }}
 
-// 通过任务名称或ID查询数据是否存在
-function findTask(param, type) {
-  let query = null;
-  if (type == 1) {
-    // 1:添加类型 2:编辑或删除类型
-    query = `select id, title from sys_task where title='${param}'`;
-  } else {
-    query = `select id, title from sys_task where id='${param}'`;
-  }
-  return queryOne(query);
-}
+// function findTask(param, type) {
+//   let query = null;
+//   if (type == 1) {
+//     query = `select id, title from sys_task where title='${param}'`;
+//   } else {
+//     query = `select id, title from sys_task where id='${param}'`;
+//   }
+//   return queryOne(query);
+// }
 
 module.exports = {
   queryTaskList,
