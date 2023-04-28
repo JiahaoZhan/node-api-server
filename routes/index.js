@@ -6,9 +6,13 @@ const { jwtAuth, decode } = require("../utils/user-jwt"); // 引入jwt认证函�
 const router = express.Router(); // 注册路由
 
 router.use(jwtAuth); // 注入认证模块
-
 router.use("/api", userRouter); // 注入用户路由模块
 router.use("/api", taskRouter); // 注入任务路由模块
+router.use("/", (req, res, next) => {
+  res.json({
+    info: "server started"
+  })
+})
 
 // 自定义统一异常处理中间件，需要放在代码最后
 router.use((err, req, res, next) => {
