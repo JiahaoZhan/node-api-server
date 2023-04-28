@@ -13,9 +13,10 @@ app.use(express.static('public'))
 
 
 app.use("/", router);
-app.get("/*", (req, res) => {
-  res.sendFile('index.html')
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'))
 })
+
 
 sequelize.sync().then((result) => {
   app.listen(process.env.PORT || 8088, () => {
