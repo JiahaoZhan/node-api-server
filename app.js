@@ -11,12 +11,7 @@ app.use(bodyParser.urlencoded({ extended: true })); // 解析form表单提交的
 app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')))
 
-
 app.use("/", router);
-app.get("/", (req, res) => {
-  res.sendFile('index.html')
-})
-
 
 sequelize.sync().then((result) => {
   app.listen(process.env.PORT || 8088, () => {
